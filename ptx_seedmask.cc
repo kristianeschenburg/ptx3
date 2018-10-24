@@ -241,10 +241,9 @@ void seedmask()
 				angle = scale_angle(angle, s_len, ribbon);
 
 				// (potentially) reverse vector
-				ColumnVector adj_angle = adjust_angle(adjusted_seed, angle,
-						s_len, ribbon);
+				// ColumnVector adj_angle = adjust_angle(adjusted_seed, angle, s_len, ribbon);
 
-				direction_counts = step_over_volume(adjusted_seed, adj_angle,
+				direction_counts = step_over_volume(adjusted_seed, angle,
 						ribbon, direction_counts, s_len, 10);
 
 				keeptotal += seedmanager.run(pos(1), pos(2), pos(3),

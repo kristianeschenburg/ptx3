@@ -130,6 +130,8 @@ volume<float> step_over_volume(ColumnVector seed, ColumnVector angle,
 
 	upd << seed(1) << seed(2) << seed(3);
 	streamline_counts(round(upd(1)),round(upd(2)),round(upd(3))) = 1;
+	upd = upd + 5*angle;
+	streamline_counts(round(upd(1)),round(upd(2)),round(upd(3))) = 5;
 	upd = upd + 10*angle;
 	streamline_counts(round(upd(1)),round(upd(2)),round(upd(3))) = 10;
 
