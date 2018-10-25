@@ -85,43 +85,6 @@ ColumnVector scale_angle(ColumnVector angle, float steplength, volume<short int>
 
 }
 
-// Determine whether seed point exists in the gray matter.  If it does,
-// adjust seed point so it exists at the Gray/White interface.
-ColumnVector adjust_seed(ColumnVector seed, ColumnVector gw, volume<short int> cortex) {
-
-	int seed_value = voxel_value(cortex, seed);
-
-	if (seed_value == 1) {
-		return gw;
-	} else {
-		return seed;
-	}
-}
-
-// Determine if the first step moves the seed point into the gray matter or the white matter.
-// If the first step
-ColumnVector adjust_angle(ColumnVector seed, ColumnVector angle,
-		float steplength, volume<short int> cortex) {
-
-	ColumnVector move_for(3), move_rev(3), adjusted(2);
-
-	// Compute forward and reverse seed
-	move_for = seed + angle;
-	move_rev = seed + (-1)*angle;
-
-	// Get forward and reverse voxel values
-	int forward_value = voxel_value(cortex, move_for);
-
-	if (forward_value == 1) {
-		adjusted = (-1)*angle;
-	} else {
-		adjusted = angle;
-	}
-
-	return adjusted;
-
-}
-
 float euclidean(ColumnVector source, ColumnVector target) {
 
 	float euc;
