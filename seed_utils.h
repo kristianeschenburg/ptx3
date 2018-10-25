@@ -122,18 +122,27 @@ ColumnVector adjust_angle(ColumnVector seed, ColumnVector angle,
 
 }
 
+float euclidean(ColumnVector source, ColumnVector target) {
+
+	float euc;
+	ColumnVector diff = target - source;
+
+	euc = sqrt(pow(diff(1),2.0) + pow(diff(2),2.0) + pow(diff(3),2.0));
+
+	return euc;
+}
+
 volume<float> step_over_volume(ColumnVector seed, ColumnVector angle,
-		volume<short int> ribbon, volume<float> streamline_counts,
-		float steplength, int loops) {
+		volume<float> streamline_counts) {
 
 	ColumnVector upd(3);
 
 	upd << seed(1) << seed(2) << seed(3);
 	streamline_counts(round(upd(1)),round(upd(2)),round(upd(3))) = 1;
-	upd = upd + 5*angle;
+	upd = upd + 2*angle;
+	streamline_counts(round(upd(1)),round(upd(2)),round(upd(3))) = 3;
+	upd = upd + 2*angle;
 	streamline_counts(round(upd(1)),round(upd(2)),round(upd(3))) = 5;
-	upd = upd + 10*angle;
-	streamline_counts(round(upd(1)),round(upd(2)),round(upd(3))) = 10;
 
 	return streamline_counts;
 }

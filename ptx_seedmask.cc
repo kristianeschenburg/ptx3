@@ -108,18 +108,25 @@ void seedmask()
 	directions = read_ascii_matrix(opts.init_dir.value());
 	cout << "done\n" << endl;
 
+	/*
 	cout << "load ribbon" << endl;
 	volume<short int> ribbon;
 	read_volume(ribbon, opts.ribbon.value());
 	cout << "done\n" << endl;
+	*/
 
+
+	cout << "load outer surf" << endl;
+	CSV outer(refvol);
+	outer.set_convention(opts.meshspace.value());
+	outer.load_rois(opts.outer_surf.value());
+	cout << "done\n" << endl;
 
 	cout << "load original G/W surface" << endl;
 	CSV gw_surf(refvol);
 	gw_surf.set_convention(opts.meshspace.value());
 	gw_surf.load_rois(opts.gw_surf.value());
 	cout << "done\n" << endl;
-
 
 	// Initialize tracking classes
 	Streamliner  stline      (seeds);
@@ -178,7 +185,8 @@ void seedmask()
 	// seed from surface-like ROIs
 	if(seeds.nSurfs()>0){
 		cout << "Surface seeds" << endl;
-		ColumnVector pos;//,dir;
+		ColumnVector pos;
+		ColumnVector pos_gw;
 		for(int i=0;i<seeds.nSurfs();i++){
 			cout<<"surface "<<i<<endl;
 
@@ -205,14 +213,15 @@ void seedmask()
 				}
 
 				counter.updateSeedLocation(seeds.get_surfloc(i,p), i, triangles);
-				pos=seeds.get_vertex_as_vox(i,p);
+				pos = seeds.get_vertex_as_vox(i,p);
+				pos_gw = gw_surf.get_vertex_as_vox(i,p);
 
 				//if(opts.meshspace.value()=="caret")
 				// dir*=-1; // normals in caret point away from the brain
 
 				if(opts.verbose.value()>=1){
 					cout <<"run"<<endl;
-					cout << pos(1) << " " <<pos(2)<< " "<<pos(3)<<endl;
+					cout << pos(1) << " " << pos(2)<< " "<< pos(3) << endl;
 				}
 
 				// takes in seed coordinate
@@ -224,30 +233,38 @@ void seedmask()
 				// set the seed index
 				float theta = directions(p+1,1);
 				float phi = directions(p+1,2);
-				seedmanager.get_stline().set_angles(theta, phi);
 
-				ColumnVector pos_gw = gw_surf.get_vertex_as_vox(0,p);
-
-				ColumnVector adjusted_seed(3);
-				ColumnVector adjusted_angle(2);
-
-				float s_len = seedmanager.get_stline().get_part().steplength();
-				adjusted_seed = adjust_seed(pos, pos_gw, ribbon);
-
+				//seedmanager.get_stline().set_angles(theta, phi);
 				// convert from spherical to cartesian coordinates
 				ColumnVector angle = sphere2cart(theta, phi);
 
+				ColumnVector anlg_pos = outer.get_vertex_as_vox(0,p);
+
+				ColumnVector forward = pos + angle;
+
+				if (euclidean(pos, anlg_pos) < euclidean(pos_gw, anlg_pos)) {
+					pos = pos_gw;
+					angle = (-1)*angle;
+				}
+
+				// ColumnVector adjusted_seed(3);
+				// ColumnVector adjusted_angle(2);
+
+				float s_len = seedmanager.get_stline().get_part().steplength();
+				// adjusted_seed = adjust_seed(pos, pos_gw, ribbon);
+
 				// scale the angles by image volume dimensions
-				angle = scale_angle(angle, s_len, ribbon);
+				angle = scale_angle(angle, s_len, refvol);
 
 				// (potentially) reverse vector
 				// ColumnVector adj_angle = adjust_angle(adjusted_seed, angle, s_len, ribbon);
 
-				direction_counts = step_over_volume(adjusted_seed, angle,
-						ribbon, direction_counts, s_len, 10);
+				direction_counts = step_over_volume(pos, angle, direction_counts);
 
+				/*
 				keeptotal += seedmanager.run(pos(1), pos(2), pos(3),
 						false, -1, opts.sampvox.value());
+						*/
 			}
 		}
 	}
@@ -257,11 +274,13 @@ void seedmask()
 	cout<<endl<<"time spent tracking: "<<(time(NULL)-_time)<<" seconds"<<endl<<endl;
 
 	// save results
+	/*
 	cout << "save results" << endl;
 	counter.save_total(keeptotal);
 	counter.save();
 
 	cout<<"finished"<<endl;
+	*/
 }
 
 

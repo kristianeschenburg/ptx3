@@ -160,6 +160,7 @@ public:
 	Option<string> init_dir;
 	Option<string> gw_surf;
 	Option<string> ribbon;
+	Option<string> outer_surf;
 
 	// hidden options
 	FmribOption<string> prefdirfile; // inside this mask, pick orientation closest to whatever is in here
@@ -494,6 +495,12 @@ inline probtrackxOptions::probtrackxOptions() :
 				false,
 				requires_argument),
 
+		outer_surf(string("--outer_surf"),
+				string(""),
+				string("Outer cortical surface (i.e. pial surface).\n"),
+				false,
+				requires_argument),
+
 
 		// Hidden argument options
 		prefdirfile(
@@ -639,6 +646,7 @@ inline probtrackxOptions::probtrackxOptions() :
 		options.add(init_dir);
 		options.add(gw_surf);
 		options.add(ribbon);
+		options.add(outer_surf);
 
 		// Hidden argument options
 		options.add(skipmask);
