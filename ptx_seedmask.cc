@@ -230,57 +230,63 @@ void seedmask()
 				// oneway (track in only one way)
 				// keeptotal = running total of number of streamlines that pass
 
-				// set the seed index
+				// set the seed index from loaded CSV
 				float theta = directions(p+1,1);
 				float phi = directions(p+1,2);
 
-				//seedmanager.get_stline().set_angles(theta, phi);
+				// set initial theta and phi angles
+				// we can move this down
+				//
+
 				// convert from spherical to cartesian coordinates
 				ColumnVector angle = sphere2cart(theta, phi);
 
+				// get analogous vertex position on outer surface
 				ColumnVector anlg_pos = outer.get_vertex_as_vox(0,p);
 
-				ColumnVector forward = pos + angle;
-
+				// determine which vertex is farther from pial surface
+				// and set as seed point
+				// reverse direction vector if needed
 				if (euclidean(pos, anlg_pos) < euclidean(pos_gw, anlg_pos)) {
 					pos = pos_gw;
 					angle = (-1)*angle;
 				}
 
-				// ColumnVector adjusted_seed(3);
-				// ColumnVector adjusted_angle(2);
-
+				// get steplength of Particle object
 				float s_len = seedmanager.get_stline().get_part().steplength();
 				// adjusted_seed = adjust_seed(pos, pos_gw, ribbon);
 
 				// scale the angles by image volume dimensions
 				angle = scale_angle(angle, s_len, refvol);
 
-				// (potentially) reverse vector
-				// ColumnVector adj_angle = adjust_angle(adjusted_seed, angle, s_len, ribbon);
-
+				// examine rough initial pathway
 				direction_counts = step_over_volume(pos, angle, direction_counts);
 
-				/*
+				// convert angle back to spherical coordinates and set Particle object
+				// initial angle members
+				ColumnVector spherical = cart2sphere(angle);
+				theta = spherical(1);
+				phi = spherical(2);
+				seedmanager.get_stline().set_angles(theta, phi);
+
+				// perform tracking
 				keeptotal += seedmanager.run(pos(1), pos(2), pos(3),
 						false, -1, opts.sampvox.value());
-						*/
+
 			}
 		}
 	}
 
-	save_volume(direction_counts,"/mnt/home/keschenb/Desktop/Test.Streamline.Direction");
-
-	cout<<endl<<"time spent tracking: "<<(time(NULL)-_time)<<" seconds"<<endl<<endl;
+	cout << endl << "time spent tracking: " << (time(NULL)-_time) << " seconds"<< endl << endl;
 
 	// save results
-	/*
 	cout << "save results" << endl;
 	counter.save_total(keeptotal);
 	counter.save();
 
+	save_volume(direction_counts, "/mnt/home/keschenb/Desktop/Test.Streamline.Direction")
+
 	cout<<"finished"<<endl;
-	*/
 }
 
 
