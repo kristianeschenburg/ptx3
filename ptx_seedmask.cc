@@ -275,16 +275,12 @@ void seedmask()
 		}
 	}
 
-	cout << "Test rebuild." << endl;
-
 	cout << endl << "time spent tracking: " << (time(NULL)-_time) << " seconds"<< endl << endl;
 
 	// save results
 	cout << "save results" << endl;
 	counter.save_total(keeptotal);
 	counter.save();
-
-	save_volume(direction_counts, "/Users/kristianeschenburg/Desktop/Test.Streamline.Direction");
 
 	cout<<"finished"<<endl;
 }
