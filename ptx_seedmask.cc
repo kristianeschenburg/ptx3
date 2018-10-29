@@ -108,24 +108,16 @@ void seedmask()
 	directions = read_ascii_matrix(opts.init_dir.value());
 	cout << "done\n" << endl;
 
-	/*
-	cout << "load ribbon" << endl;
-	volume<short int> ribbon;
-	read_volume(ribbon, opts.ribbon.value());
-	cout << "done\n" << endl;
-	*/
-
-
 	cout << "load outer surf" << endl;
 	CSV outer(refvol);
 	outer.set_convention(opts.meshspace.value());
-	outer.load_rois(opts.outer_surf.value());
+	outer.load_rois(opts.outersurf.value());
 	cout << "done\n" << endl;
 
 	cout << "load original G/W surface" << endl;
 	CSV gw_surf(refvol);
 	gw_surf.set_convention(opts.meshspace.value());
-	gw_surf.load_rois(opts.gw_surf.value());
+	gw_surf.load_rois(opts.gwsurf.value());
 	cout << "done\n" << endl;
 
 	// Initialize tracking classes
@@ -181,6 +173,8 @@ void seedmask()
 		}
 
 	}
+
+	cout << "OneWayOnly flag: " << opts.onewayonly.value() << endl;
 
 	// seed from surface-like ROIs
 	if(seeds.nSurfs()>0){
@@ -267,15 +261,21 @@ void seedmask()
 				ColumnVector spherical = cart2sphere(angle);
 				theta = spherical(1);
 				phi = spherical(2);
+				/*
+				cout << "Angles before tracking: " << endl;
+				cout << theta << " " << phi << endl;
+				*/
 				seedmanager.get_stline().set_angles(theta, phi);
 
 				// perform tracking
 				keeptotal += seedmanager.run(pos(1), pos(2), pos(3),
-						false, -1, opts.sampvox.value());
+						opts.onewayonly.value(), -1, opts.sampvox.value());
 
 			}
 		}
 	}
+
+	cout << "Test rebuild." << endl;
 
 	cout << endl << "time spent tracking: " << (time(NULL)-_time) << " seconds"<< endl << endl;
 
@@ -284,7 +284,7 @@ void seedmask()
 	counter.save_total(keeptotal);
 	counter.save();
 
-	save_volume(direction_counts, "/mnt/home/keschenb/Desktop/Test.Streamline.Direction")
+	save_volume(direction_counts, "/Users/kristianeschenburg/Desktop/Test.Streamline.Direction");
 
 	cout<<"finished"<<endl;
 }

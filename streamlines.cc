@@ -1077,6 +1077,9 @@ int Streamliner::streamline(const float& x_init, const float& y_init,
 			// //////////////////////////////
 
 			// sample a new fibre orientation
+			// th = azimuthal angle
+			// ph = polar angle
+			// f = fiber compartment
 			int newx, newy, newz;
 			if (opts.skipmask.value() == "") {
 				th_ph_f = vols.sample(m_part.x(), m_part.y(), m_part.z(), // sample at this location
@@ -1092,12 +1095,6 @@ int Streamliner::streamline(const float& x_init, const float& y_init,
 							pref_y, pref_z, sample_fib, sampled_fib, newx, newy,
 							newz);
 			}
-
-			/*
-			 if (it == 1) {
-			 cout << "\nTheta: " << th_ph_f(1) << " Phi: " << th_ph_f(2) << " F: " << th_ph_f(3) << "" << endl;
-			 }
-			 */
 
 			ColumnVector voxfib(4);
 			voxfib << newx << newy << newz << sampled_fib;
@@ -1119,6 +1116,11 @@ int Streamliner::streamline(const float& x_init, const float& y_init,
 				tmp2 = (float) rand() / (float) RAND_MAX;
 			}
 
+			// Add check for first streamline propagation step
+			if (it == 1) {
+				th_ph_f << m_idir_th << m_idir_ph << 1;
+			}
+
 			if (th_ph_f(3) > tmp2) { //volume fraction criterion
 				if (opts.loccurvthresh.value() != "") {
 					cthr = m_loccurvthresh(x_p, y_p, z_p);
@@ -1131,12 +1133,9 @@ int Streamliner::streamline(const float& x_init, const float& y_init,
 					if ((m_mask(x_p, y_p, z_p) != 0)) {
 
 						if (!opts.modeuler.value()) {
+
 							m_part.jump(th_ph_f(1), th_ph_f(2), forcedir);
 
-							/*
-							 cout << "\nPosition after jump: " << endl;
-							 cout << "NewX: " << m_part.x() << " NewY: " << m_part.y() << " NewZ: " << m_part.z() << "\n" << endl;
-							 */
 						} else {
 							ColumnVector test_th_ph_f;
 							m_part.testjump(th_ph_f(1), th_ph_f(2), forcedir);

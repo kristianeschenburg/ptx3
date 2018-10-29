@@ -158,9 +158,8 @@ public:
 	 *
 	 */
 	Option<string> init_dir;
-	Option<string> gw_surf;
-	Option<string> ribbon;
-	Option<string> outer_surf;
+	Option<string> gwsurf;
+	Option<string> outersurf;
 
 	// hidden options
 	FmribOption<string> prefdirfile; // inside this mask, pick orientation closest to whatever is in here
@@ -471,10 +470,9 @@ inline probtrackxOptions::probtrackxOptions() :
 		 *
 		 * init_dir : csv file of initial directions
 		 * 			  (n seeds x 2 angles (azimuthal and polar)
-		 * gw_surf : gray / white surface provided as a gifti file
+		 * gwsurf : gray / white surface provided as a gifti file
 		 *
-		 * ribbon : cortical ribbon
-		 * 			provided as a NIFTI volume
+		 * outersurf : pial surface provided as gifti file
 		 *
 		 */
 		init_dir(string("--init_dir"),
@@ -483,19 +481,13 @@ inline probtrackxOptions::probtrackxOptions() :
 				false,
 				requires_argument),
 
-		gw_surf(string("--gw_surface"),
+		gwsurf(string("--gwsurf"),
 				string(""),
 				string("Gray / white interface as GIFTI surface."),
 				false,
 				requires_argument),
 
-		ribbon(string("--ribbon"),
-				string(""),
-				string("Cortical ribbon volumetric mask (nii.gz) in seedspace.\n"),
-				false,
-				requires_argument),
-
-		outer_surf(string("--outer_surf"),
+		outersurf(string("--pialsurf"),
 				string(""),
 				string("Outer cortical surface (i.e. pial surface).\n"),
 				false,
@@ -644,9 +636,8 @@ inline probtrackxOptions::probtrackxOptions() :
 
 		// Arguments for tracking using initial directions
 		options.add(init_dir);
-		options.add(gw_surf);
-		options.add(ribbon);
-		options.add(outer_surf);
+		options.add(gwsurf);
+		options.add(outersurf);
 
 		// Hidden argument options
 		options.add(skipmask);
