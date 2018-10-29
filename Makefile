@@ -2,6 +2,7 @@ include ${FSLCONFDIR}/default.mk
 
 PROJNAME = fdt
 
+# Commt this line out to compile without using debugger
 OPTFLAGS = -ggdb
 
 #ARCHFLAGS = -arch i386
