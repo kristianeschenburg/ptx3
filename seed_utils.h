@@ -66,6 +66,22 @@ ColumnVector cart2sphere(ColumnVector cartesian) {
 
 }
 
+float vector_length(ColumnVector cartesian) {
+
+	float length = pow(cartesian(1), 2.0) + pow(cartesian(2), 2.0) + pow(cartesian(3), 2.0);
+	return length;
+}
+
+
+ColumnVector normalize_angle(ColumnVector cartesian) {
+
+	float length = vector_length(cartesian);
+	ColumnVector normed = cartesian/length;
+
+	return normed;
+
+}
+
 ColumnVector scale_angle(ColumnVector angle, float steplength, volume<short int> cortex) {
 
 	ColumnVector scaled(3);
@@ -90,7 +106,7 @@ float euclidean(ColumnVector source, ColumnVector target) {
 	float euc;
 	ColumnVector diff = target - source;
 
-	euc = sqrt(pow(diff(1),2.0) + pow(diff(2),2.0) + pow(diff(3),2.0));
+	euc = sqrt(vector_length(diff));
 
 	return euc;
 }

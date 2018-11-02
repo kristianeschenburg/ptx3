@@ -248,10 +248,13 @@ public:
 
 	// computes streamline step in theta / phi direction
 	void jump(const float& theta, const float& phi, bool forcedir = false) {
+
+		// compute Cartesian direction from spherical coordinates
 		float tmpsin = sin(theta);
 		float rx_new = cos(phi) * tmpsin;
 		float ry_new = sin(phi) * tmpsin;
 		float rz_new = cos(theta);
+
 		int sign = 1;
 		bool init = false;
 		if (!m_simdiff) {
@@ -270,25 +273,18 @@ public:
 			sign = (float) rand() / float(RAND_MAX) > 0.5 ? 1 : -1;
 		}
 
-		/*
-		cout << "Cartesian Directions: " << endl;
-		cout << "rx_new: " << rx_new << " ry_new: " << ry_new << " rz_new: " << rz_new << endl;
-		*/
-
+		// compute step length size for X, Y, and Z position
 		float delta_x, delta_y, delta_z;
 		delta_x = m_steplength / m_xdim * rx_new;
 		delta_y = m_steplength / m_ydim * ry_new;
 		delta_z = m_steplength / m_zdim * rz_new;
 
-		/*
-		cout << "Scaled Cartesian Direction: " << endl;
-		cout << "dx_new: " << delta_x << " dy_new: " << delta_y << " dz_new: " << delta_z << endl;
-		*/
-
+		// update X, Y, and Z position
 		m_x += sign * delta_x;
 		m_y += sign * delta_y;
 		m_z += sign * delta_z;
 
+		// compute change in direction
 		m_rx = sign * rx_new;
 		m_ry = sign * ry_new;
 		m_rz = sign * rz_new;

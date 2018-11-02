@@ -354,7 +354,7 @@ class Streamliner {
 	float m_z_s_init;
 
 	// members for initial tracking
-	// initial polar angle
+	// initial spherical angles
 	float m_idir_th;
 	float m_idir_ph;
 

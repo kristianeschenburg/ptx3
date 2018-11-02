@@ -3,7 +3,7 @@ include ${FSLCONFDIR}/default.mk
 PROJNAME = fdt
 
 # Commt this line out to compile without using debugger
-OPTFLAGS = -ggdb
+# OPTFLAGS = -ggdb
 
 #ARCHFLAGS = -arch i386
 #ARCHLDFLAGS = -arch i386
@@ -14,7 +14,7 @@ ifeq ($(FSLMACHTYPE),apple-darwin8-gcc4.0)
 endif 
 
 
-USRINCFLAGS = -I ${INC_EXPAT} -I ${INC_NEWMAT} -I ${INC_NEWRAN} -I ${INC_CPROB} -I ${INC_PROB} -I ${INC_BOOST} -I ${INC_ZLIB} -I /mnt/parcellator/parcellation/Software/fslbuild/fsl/src/
+USRINCFLAGS = -I${INC_EXPAT} -I${INC_NEWMAT} -I${INC_NEWRAN} -I${INC_CPROB} -I${INC_PROB} -I${INC_BOOST} -I${INC_ZLIB} -I/mnt/parcellator/parcellation/Software/fslbuild/fsl/src/
 USRLDFLAGS = -L ${LIB_EXPAT} -L${LIB_NEWMAT} -L${LIB_NEWRAN} -L${LIB_CPROB} -L${LIB_PROB} -L${LIB_ZLIB}
 
 DLIBS = -lnewmeshclass -lwarpfns -lbasisfield -lfslsurface  -lfslvtkio -lmeshclass -lnewimage -lutils -lmiscmaths -lnewmat -lnewran -lfslio -lgiftiio -lexpat -lfirst_lib -lniftiio -lznz -lutils -lprob -lm -lz

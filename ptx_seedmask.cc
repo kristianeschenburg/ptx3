@@ -103,22 +103,27 @@ void seedmask()
 		cerr<<"Warning: need to set a reference volume when defining a surface-based seed"<<endl;
 	}
 
-	cout << "load initial directions" << endl;
+
 	Matrix directions;
-	directions = read_ascii_matrix(opts.init_dir.value());
-	cout << "done\n" << endl;
+	CSV outer(refvol), inner(refvol);
+	if (opts.forceangle.value()) {
 
-	cout << "load outer surf" << endl;
-	CSV outer(refvol);
-	outer.set_convention(opts.meshspace.value());
-	outer.load_rois(opts.outersurf.value());
-	cout << "done\n" << endl;
+		cout << "load initial direction" << endl;
+		directions = read_ascii_matrix(opts.initdir.value());
+		cout << "done\n" << endl;
 
-	cout << "load original G/W surface" << endl;
-	CSV gw_surf(refvol);
-	gw_surf.set_convention(opts.meshspace.value());
-	gw_surf.load_rois(opts.gwsurf.value());
-	cout << "done\n" << endl;
+		cout << "load inner and outer surface" << endl;
+
+		outer.set_convention(opts.meshspace.value());
+		outer.load_rois(opts.outersurf.value());
+
+		inner.set_convention(opts.meshspace.value());
+		inner.load_rois(opts.innersurf.value());
+
+		cout << "done\n" << endl;
+
+	}
+
 
 	// Initialize tracking classes
 	Streamliner  stline      (seeds);
@@ -208,64 +213,42 @@ void seedmask()
 
 				counter.updateSeedLocation(seeds.get_surfloc(i,p), i, triangles);
 				pos = seeds.get_vertex_as_vox(i,p);
-				pos_gw = gw_surf.get_vertex_as_vox(i,p);
 
-				//if(opts.meshspace.value()=="caret")
-				// dir*=-1; // normals in caret point away from the brain
+				// if forcing tracking with initial directions
+				if (opts.forceangle.value()) {
+
+					// get spherical coordinates, convert to Cartesian
+					float theta = directions(p+1,1);
+					float phi = directions(p+1,2);
+					ColumnVector angle = sphere2cart(theta,phi);
+
+					// get inner and outer surface positions
+					ColumnVector inner_pos = inner.get_vertex_as_vox(0, p);
+					ColumnVector outer_pos = outer.get_vertex_as_vox(0, p);
+
+					// if seed position between inner and outer, seed becomes inner
+					// angle is reversed
+					if (euclidean(pos, outer_pos) < euclidean(inner_pos, outer_pos)) {
+						pos = inner_pos;
+						angle = (-1)*angle;
+					}
+
+					// normalize direction vector to unit length
+					// and convert back to spherical coordinates
+					angle = normalize_angle(angle);
+					ColumnVector spherical = cart2sphere(angle);
+					theta = spherical(1);
+					phi = spherical(2);
+
+					// set streamliner object with initial angle
+					seedmanager.get_stline().set_angles(theta,phi);
+
+				}
 
 				if(opts.verbose.value()>=1){
 					cout <<"run"<<endl;
 					cout << pos(1) << " " << pos(2)<< " "<< pos(3) << endl;
 				}
-
-				// takes in seed coordinate
-				// sampvox (whether to sample seed points from sphere around seed)
-				// fibst (force starting fiber) (default -1)
-				// oneway (track in only one way)
-				// keeptotal = running total of number of streamlines that pass
-
-				// set the seed index from loaded CSV
-				float theta = directions(p+1,1);
-				float phi = directions(p+1,2);
-
-				// set initial theta and phi angles
-				// we can move this down
-				//
-
-				// convert from spherical to cartesian coordinates
-				ColumnVector angle = sphere2cart(theta, phi);
-
-				// get analogous vertex position on outer surface
-				ColumnVector anlg_pos = outer.get_vertex_as_vox(0,p);
-
-				// determine which vertex is farther from pial surface
-				// and set as seed point
-				// reverse direction vector if needed
-				if (euclidean(pos, anlg_pos) < euclidean(pos_gw, anlg_pos)) {
-					pos = pos_gw;
-					angle = (-1)*angle;
-				}
-
-				// get steplength of Particle object
-				float s_len = seedmanager.get_stline().get_part().steplength();
-				// adjusted_seed = adjust_seed(pos, pos_gw, ribbon);
-
-				// scale the angles by image volume dimensions
-				angle = scale_angle(angle, s_len, refvol);
-
-				// examine rough initial pathway
-				direction_counts = step_over_volume(pos, angle, direction_counts);
-
-				// convert angle back to spherical coordinates and set Particle object
-				// initial angle members
-				ColumnVector spherical = cart2sphere(angle);
-				theta = spherical(1);
-				phi = spherical(2);
-				/*
-				cout << "Angles before tracking: " << endl;
-				cout << theta << " " << phi << endl;
-				*/
-				seedmanager.get_stline().set_angles(theta, phi);
 
 				// perform tracking
 				keeptotal += seedmanager.run(pos(1), pos(2), pos(3),

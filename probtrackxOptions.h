@@ -157,8 +157,10 @@ public:
 	 *Options for tracking using initial directions
 	 *
 	 */
-	Option<string> init_dir;
-	Option<string> gwsurf;
+
+	Option<bool> forceangle;
+	Option<string> initdir;
+	Option<string> innersurf;
 	Option<string> outersurf;
 
 	// hidden options
@@ -468,26 +470,36 @@ inline probtrackxOptions::probtrackxOptions() :
 		/* Arguments for tracking using an initial direction.
 		 * Requires a series of three arguments
 		 *
-		 * init_dir : csv file of initial directions
+		 * forcedir : boolean indication directions are fored
+		 *
+		 * initdir : csv file of initial directions
 		 * 			  (n seeds x 2 angles (azimuthal and polar)
-		 * gwsurf : gray / white surface provided as a gifti file
+		 *
+		 * innersurf : gray / white surface provided as a gifti file
 		 *
 		 * outersurf : pial surface provided as gifti file
 		 *
 		 */
-		init_dir(string("--init_dir"),
+
+		forceangle(string("--forceangle"),
+				false,
+				string("Force initial tracking directions.  If supplied, --innersurf, --outersurf, and --initdir must also be provided."),
+				false,
+				no_argument),
+
+		initdir(string("--initdir"),
 				string(""),
 				string("Initial directions CSV file: N seeds by 2 columns (azimuthal and polar angles)."),
 				false,
 				requires_argument),
 
-		gwsurf(string("--gwsurf"),
+		innersurf(string("--innersurf"),
 				string(""),
 				string("Gray / white interface as GIFTI surface."),
 				false,
 				requires_argument),
 
-		outersurf(string("--pialsurf"),
+		outersurf(string("--outersurf"),
 				string(""),
 				string("Outer cortical surface (i.e. pial surface).\n"),
 				false,
@@ -635,8 +647,9 @@ inline probtrackxOptions::probtrackxOptions() :
 		options.add(rseed);
 
 		// Arguments for tracking using initial directions
-		options.add(init_dir);
-		options.add(gwsurf);
+		options.add(forceangle);
+		options.add(initdir);
+		options.add(innersurf);
 		options.add(outersurf);
 
 		// Hidden argument options

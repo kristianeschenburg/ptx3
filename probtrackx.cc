@@ -106,6 +106,7 @@ int main(int argc, char **argv) {
 				<< endl;
 		exit(1);
 	}
+
 	if (opts.simple.value()) {
 		if (opts.matrix1out.value() || opts.matrix3out.value()) {
 			cerr << "Error: cannot use matrix1 and matrix3 in simple mode"
@@ -115,6 +116,14 @@ int main(int argc, char **argv) {
 		cout << "Running in simple mode" << endl;
 		track();
 	} else {
+
+		if (opts.forceangle.value()) {
+			if (opts.initdir.value() == "" || opts.innersurf.value() == "" || opts.outersurf.value() == "") {
+				cerr << "Error: initdir, innersurf, and outersurf flags must ALL be provided." << endl;
+				exit(1);
+			}
+		}
+
 		if (!opts.network.value()) {
 			cout << "Running in seedmask mode" << endl;
 			seedmask();
@@ -123,6 +132,7 @@ int main(int argc, char **argv) {
 			nmasks();
 		}
 	}
+
 
 	//Tracer_Plus::dump_times(logger.getDir());
 

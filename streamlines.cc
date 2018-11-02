@@ -1101,6 +1101,8 @@ int Streamliner::streamline(const float& x_init, const float& y_init,
 			m_diff_path.push_back(voxfib);
 
 			// only test stopping after at least one step
+			// if forcefirststep defined, don't do anything
+			// otherwise run has_crossed()
 			if (opts.stopfile.value() != "" && m_path.size() > 1) {
 				if (m_path.size() == 2 && opts.forcefirststep.value()) {
 					// do nothing
@@ -1117,8 +1119,10 @@ int Streamliner::streamline(const float& x_init, const float& y_init,
 			}
 
 			// Add check for first streamline propagation step
-			if (it == 1) {
-				th_ph_f << m_idir_th << m_idir_ph << 1;
+			if (opts.forceangle.value()) {
+				if (it == 1) {
+					th_ph_f << m_idir_th << m_idir_ph << 1;
+				}
 			}
 
 			if (th_ph_f(3) > tmp2) { //volume fraction criterion
@@ -1129,13 +1133,18 @@ int Streamliner::streamline(const float& x_init, const float& y_init,
 					break;
 				}
 
+				// if sampled theta and phi are not zero
 				if ((th_ph_f(1) != 0 && th_ph_f(2) != 0)) {
+
+					// if tracking mask is not zero
 					if ((m_mask(x_p, y_p, z_p) != 0)) {
 
+						// no modified euler streaming
 						if (!opts.modeuler.value()) {
 
 							m_part.jump(th_ph_f(1), th_ph_f(2), forcedir);
 
+						// modified euler streaming
 						} else {
 							ColumnVector test_th_ph_f;
 							m_part.testjump(th_ph_f(1), th_ph_f(2), forcedir);
