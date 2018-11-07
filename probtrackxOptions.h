@@ -162,6 +162,7 @@ public:
 	Option<string> initdir;
 	Option<string> innersurf;
 	Option<string> outersurf;
+	Option<string> tracksource;
 
 	// hidden options
 	FmribOption<string> prefdirfile; // inside this mask, pick orientation closest to whatever is in here
@@ -506,6 +507,12 @@ inline probtrackxOptions::probtrackxOptions() :
 				false,
 				requires_argument),
 
+		tracksource(string("--tracksource"),
+				string("vertices"),
+				string("Source point type: 'vertices','voxels','both'\n"),
+				false,
+				requires_argument),
+
 
 		// Hidden argument options
 		prefdirfile(
@@ -658,6 +665,7 @@ inline probtrackxOptions::probtrackxOptions() :
 		options.add(initdir);
 		options.add(innersurf);
 		options.add(outersurf);
+		options.add(tracksource);
 
 		// Hidden argument options
 		options.add(skipmask);

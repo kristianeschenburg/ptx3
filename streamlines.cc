@@ -2889,27 +2889,34 @@ int Seedmanager::run(const float& x, const float& y, const float& z,
 		int rejflag1 = 1, rejflag2 = 1; // 0:accept, 1:reject, 2:wait
 		m_counter.clear_path();
 
-		// track in one direction
-		if (!onewayonly || opts.matrix3out.value()) { //always go both ways in matrix3 mode
-			rejflag1 = m_counter.get_stline().streamline(newx, newy, newz,
-					m_seeddims, fibst);
 
-			if (rejflag1 == 0 || rejflag1 == 2) {
-				forwardflag = true;
-				m_counter.append_path();
-				if (opts.save_paths.value())
-					m_counter.add_path();
+		string trk_val = opts.tracksource.value();
+
+		// if seeding from voxels, or both voxels and vertices
+		// check option to track in both directions
+		// always track in both directions when using matrix3 mode
+		if (trk_val == "" || trk_val == "voxels" || trk_val == "both") {
+			if (!onewayonly || opts.matrix3out.value()) {
+				rejflag1 = m_counter.get_stline().streamline(newx, newy, newz,
+						m_seeddims, fibst);
+
+				if (rejflag1 == 0 || rejflag1 == 2) {
+					forwardflag = true;
+					m_counter.append_path();
+					if (opts.save_paths.value())
+						m_counter.add_path();
+				}
+				if (rejflag1 == 0 && opts.matrix3out.value()) {
+					m_counter.get_stline().copy_inmask3();
+					m_counter.get_stline().reset_m_inmask3_aux();
+				} else if (rejflag1 == 1 && opts.matrix3out.value()) {
+					m_counter.get_stline().reset_m_inmask3_aux();
+				}
+				m_counter.get_stline().reverse();
 			}
-			if (rejflag1 == 0 && opts.matrix3out.value()) {
-				m_counter.get_stline().copy_inmask3();
-				m_counter.get_stline().reset_m_inmask3_aux();
-			} else if (rejflag1 == 1 && opts.matrix3out.value()) {
-				m_counter.get_stline().reset_m_inmask3_aux();
-			}
-			m_counter.get_stline().reverse();
 		}
 
-		// track in the other direction
+		// otherwise only track in one direction
 		rejflag2 = m_counter.get_stline().streamline(newx, newy, newz,
 				m_seeddims, fibst);
 
