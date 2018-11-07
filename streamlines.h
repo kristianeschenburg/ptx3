@@ -934,6 +934,7 @@ public:
 
 	void add_path();
 	void save_paths();
+	void save_subpaths();
 
 };
 

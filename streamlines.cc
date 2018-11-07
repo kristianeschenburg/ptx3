@@ -66,6 +66,8 @@
 #include "warpfns/fnirt_file_reader.h"
 #include "warpfns/warpfns.h"
 
+using namespace std;
+
 //*****************************************
 //************* MatCell_cmpr **************
 void MatCell_cmpr::decode(int64_t incode, int& nsamples, int& fibcnt1,
@@ -1118,12 +1120,18 @@ int Streamliner::streamline(const float& x_init, const float& y_init,
 				tmp2 = (float) rand() / (float) RAND_MAX;
 			}
 
-			// Add check for first streamline propagation step
+
+			/*
+			 * Add check for first streamline propagation direction
+			 * If this is the first step, then force direction to
+			 * be the provided direction.
+			 */
 			if (opts.forceangle.value()) {
 				if (it == 1) {
 					th_ph_f << m_idir_th << m_idir_ph << 1;
 				}
 			}
+
 
 			if (th_ph_f(3) > tmp2) { //volume fraction criterion
 				if (opts.loccurvthresh.value() != "") {
@@ -1806,6 +1814,35 @@ void Counter::save_paths() {
 	}
 }
 
+// save first subpath_length steps of streamlines
+void Counter::save_subpaths() {
+
+	cout << "Saving subpaths." << endl;
+	cout << "m_save_paths length: " << " " << m_save_paths.size() << endl;
+
+	string filename = logger.appendDir("saved_subpaths.txt");
+	ofstream of(filename.c_str());
+	if (of.is_open()) {
+		for (unsigned int i = 0; i < m_save_paths.size(); i++) {
+			stringstream flot;
+			flot << "# " << m_save_paths[i].size() << endl;
+			int mpath_size = m_save_paths[i].size();
+
+			for (unsigned int j = 0; j < std::min(10, mpath_size); j+=2) {
+
+				// write each (X,Y,Z) coordinate
+				flot << m_save_paths[i][j](1) << " " << m_save_paths[i][j](2)
+						<< " " << m_save_paths[i][j](3) << endl;
+			}
+			of << flot.str();
+		}
+		of.close();
+	} else {
+		cerr << "Counter::save_paths:error opening file for writing: "
+				<< filename << endl;
+	}
+}
+
 void Counter::update_seedcounts() {
 	//Tracer_Plus tr("Counter::update_seedcounts");
 	vector<int> crossed;
@@ -2357,6 +2394,11 @@ void Counter::save() {
 	}
 	if (opts.save_paths.value())
 		save_paths();
+
+	if (opts.save_subpaths.value()) {
+		save_subpaths();
+	}
+
 	if (opts.s2tout.value()) {
 		save_seedcounts();
 	}
@@ -2839,8 +2881,6 @@ int Seedmanager::run(const float& x, const float& y, const float& z,
 
 		if (opts.verbose.value() > 1)
 			logger.setLogFile("particle" + num2str(p));
-
-		/* m_counter.get_stline() returns the streamliner object */
 
 		// reset streamliner object for start of new fiber
 		m_counter.get_stline().reset(); //This now includes a vols.reset() in order to get fibst right.

@@ -171,6 +171,7 @@ public:
 	FmribOption<bool> onewayonly; // in surface mode, track towards the brain (assumes surface normal points towards the brain)
 	FmribOption<bool> opathdir; // like fdt_paths but with average local tract orientation
 	FmribOption<bool> save_paths;       // save paths to ascii file
+	FmribOption<bool> save_subpaths;
 	FmribOption<string> locfibchoice; // inside this mask, define local rules for fibre picking
 	FmribOption<string> loccurvthresh; // inside this mask, define local curvature threshold
 	FmribOption<bool> targetpaths;  // output separate fdt_paths for each target
@@ -553,6 +554,12 @@ inline probtrackxOptions::probtrackxOptions() :
 				false,
 				no_argument),
 
+		save_subpaths(string("--savesubpaths"),
+				false,
+				string("Save initial segment of streamlines to ascii file."),
+				false,
+				no_argument),
+
 		locfibchoice(
 				string("--locfibchoice"),
 				string(""),
@@ -660,6 +667,7 @@ inline probtrackxOptions::probtrackxOptions() :
 		options.add(onewayonly);
 		options.add(opathdir);
 		options.add(save_paths);
+		options.add(save_subpaths);
 		options.add(locfibchoice);
 		options.add(loccurvthresh);
 		options.add(targetpaths);

@@ -92,6 +92,11 @@ void seedmask()
 	else
 		read_volume(refvol,opts.maskfile.value());
 
+	if (opts.save_subpaths.value()) {
+		cout << "Save SubPaths Value: " << opts.save_subpaths.value() << endl;
+	}
+
+
 
 	cout<<"load seeds"<<endl;
 	CSV seeds(refvol);
