@@ -867,6 +867,8 @@ int Streamliner::streamline(const float& x_init, const float& y_init,
 				m_loopcheck(lcx, lcy, lcz, 2) = m_part.rz();
 			}
 
+			// get current particle position
+			// should be in DTI space
 			x = m_part.x();
 			y = m_part.y();
 			z = m_part.z();
@@ -875,8 +877,8 @@ int Streamliner::streamline(const float& x_init, const float& y_init,
 			y_p = (int) MISCMATHS::round(y);
 			z_p = (int) MISCMATHS::round(z);
 
-			// Applying linear / non-linear transformation coordinates
-			// now find xyz in seeds space
+			// Apply linear / non-linear transformation coordinates
+			// to find xyz in Seed space
 			if (cnt >= 0) {
 				if (!m_IsNonlinXfm)
 					xyz_seeds = vox_to_vox(xyz_dti, vols.dimensions(),
@@ -887,14 +889,10 @@ int Streamliner::streamline(const float& x_init, const float& y_init,
 				}
 			}
 
+			// Round coordinate to get voxel position
 			x_s = (int) MISCMATHS::round((float) xyz_seeds(1));
 			y_s = (int) MISCMATHS::round((float) xyz_seeds(2));
 			z_s = (int) MISCMATHS::round((float) xyz_seeds(3));
-
-			/*
-			 cout << "DiffX: " << xyz_dti(1) << " DiffY: " << xyz_dti(2) << " DiffZ: " << xyz_dti(3) << endl;
-			 cout << "SeedX: " << xyz_seeds(1) << " SeedY: " << xyz_seeds(2) << " SeedZ: " << xyz_seeds(3) << endl;
-			 */
 
 			// how prefdir works:
 			// if a vector field is given (tested using 4th dim==3) then set prefdir to that orientation
@@ -919,18 +917,13 @@ int Streamliner::streamline(const float& x_init, const float& y_init,
 				}
 			}
 
-			// // attractor mask
-			// if(opts.pullmask.value()!=""){
-			//   ColumnVector pulldir(3);float mindist;
-			//   if(m_pullmask.is_near_surface(xyz_seeds,opts.pulldist.value(),pulldir,mindist)){
-			//     m_prefx = pulldir(1);
-			//     m_prefy = pulldir(2);
-			//     m_prefz = pulldir(3);
-			//   }
-			// }
-
-			// augment the path
+			// augment the path with the current particle position
+			// first augmentation is with seed point
 			m_path.push_back(xyz_seeds);
+
+			// cnt initialized as -1
+			// cnt is 0 when first streamline step is taken
+			// cnt = 0 means fiber is a single point -- has no length
 			cnt++;
 			if (cnt > 0)
 				pathlength += opts.steplength.value();
@@ -1105,9 +1098,18 @@ int Streamliner::streamline(const float& x_init, const float& y_init,
 			// only test stopping after at least one step
 			// if forcefirststep defined, don't do anything
 			// otherwise run has_crossed()
+
+			// m_path.size() is the number of points in streamline so far
+			// m_path.size() = 1 if currently at seed point
 			if (opts.stopfile.value() != "" && m_path.size() > 1) {
+
+				// if the path is 2 points long (meaning has taken one step)
+				// and forcefirststep is True
 				if (m_path.size() == 2 && opts.forcefirststep.value()) {
-					// do nothing
+
+					// dont check if the streamline has crossed the stopping mask
+
+				// otherwise, check if path has crossed stopping mask
 				} else if (m_stop.has_crossed(m_path[cnt - 1], m_path[cnt],
 						crossedvox)) {
 					break;
@@ -1125,6 +1127,8 @@ int Streamliner::streamline(const float& x_init, const float& y_init,
 			 * Add check for first streamline propagation direction
 			 * If this is the first step, then force direction to
 			 * be the provided direction.
+			 *
+			 * Could set as it == 1, or as cnt == 0
 			 */
 			if (opts.forceangle.value()) {
 				if (it == 1) {
@@ -2919,6 +2923,9 @@ int Seedmanager::run(const float& x, const float& y, const float& z,
 		// otherwise only track in one direction
 		rejflag2 = m_counter.get_stline().streamline(newx, newy, newz,
 				m_seeddims, fibst);
+
+		cout << "rejflag1:  " << rejflag1 << endl;
+		cout << "rejflag2:  " << rejflag2 << endl;
 
 		if (rejflag2 == 0) {
 			backwardflag = true;
