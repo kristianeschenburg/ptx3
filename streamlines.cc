@@ -2124,8 +2124,10 @@ void Counter::update_matrix3() {
 
 	vector<pair<int, int> > mytrianglesi; //list with the roi and triangles of an individual vertex
 	vector<pair<int, int> > mytrianglesj; //list with the roi and triangles of an individual vertex
+
+	// if --lrtarget3 is not specified
+	// where we updated NxN matrix
 	if (!uselr) {
-		// where we update NxN matrix
 		for (unsigned int i = 0; i < inmask3.size(); i++) {
 			mytrianglesi.clear();
 			pair<int, int> mypair;
@@ -2196,7 +2198,11 @@ void Counter::update_matrix3() {
 				}
 			}
 		}
-	} else { // where we update Nxn matrix
+	}
+
+	// if --lrtarget3 is specified
+	// where we update Nxn matrix
+	else {
 		make_unique(inlrmask3);
 		for (unsigned int i = 0; i < inmask3.size(); i++) {
 			mytrianglesi.clear();

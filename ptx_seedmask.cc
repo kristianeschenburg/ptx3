@@ -136,6 +136,10 @@ void seedmask()
 	counter.initialise();
 	Seedmanager  seedmanager (counter);
 
+	/* counter.initialise() initializes the output matrices
+	 * that store the streamline counts
+	*/
+
 	srand(opts.rseed.value()); // need to reinitialise random seed because of GIFTI!!
 
 
