@@ -1798,6 +1798,28 @@ void Counter::reset_beenhere() {
 void Counter::add_path() {
 	m_save_paths.push_back(m_path);
 }
+
+void Counter::save_path_points(vector<ColumnVector> points, int omat_type) {
+
+	string basename = "saved_path_points_matrix" + std::to_string(omat_type) + ".txt";
+	string filename = logger.appendDir(basename);
+
+	ofstream of(filename.c_str());
+
+	if (of.is_open()) {
+		for (unsigned int i = 0; i < points.size(); i++) {
+			stringstream flot;
+			flot << points[i](1) << " " << points[i](2) << " " << points[i](3) << endl;
+			of << flot.str();
+		}
+		of.close();
+	} else {
+		cerr << "Counter::save_path_points:error opening file for writing: "
+				<< filename << endl;
+	}
+}
+
+
 void Counter::save_paths() {
 	string filename = logger.appendDir("saved_paths.txt");
 	ofstream of(filename.c_str());
@@ -1986,6 +2008,7 @@ void Counter::update_pathdist_multi() {
 void Counter::update_matrix1() {
 	//Tracer_Plus tr("Counter::update_matrix1");
 	// use path and has_crossed
+
 	float pathlength = opts.steplength.value(), val = 1;
 	vector<int> crossedseeds, crossedlocs;
 	vector<pair<int, int> > surf_Triangle;
@@ -2048,6 +2071,7 @@ void Counter::update_matrix1() {
 			mytrianglesj.push_back(mypair2);
 		}
 		bool connect = false;
+
 		if (m_curloc.loc != locs[j].first) {
 			for (unsigned int ii = 0;
 					ii < m_curloc.triangles.size() && !connect; ii++) {
@@ -2062,7 +2086,37 @@ void Counter::update_matrix1() {
 				}
 			}
 		}
+
+
+		/*
+		 * m_curloc.loc + 1 = seed index
+		 * locs[j].first + 1 = target index
+		 * locs[j].second.value = streamline length between
+		 * seed and target indices
+		 *
+		 * m_ConMat1 saves sum of streamline lengths between
+		 * seed and target indices
+		 *
+		 * m_ConMat1b saves number of streamlines between
+		 * seed and target indices
+		 *
+		 * m_ConMat1c saves [seed target length] for EACH streamline
+		 *
+		 */
+
+		int seed, target;
+		float plen;
+		ColumnVector path_points(3);
+
 		if (connect) {
+
+			// Save the point patterns and lengths
+			seed = m_curloc.loc+1;
+			target = locs[j].first+1;
+			plen = locs[j].second.value;
+			path_points << seed << target << plen;
+			m_ConMat1c.push_back(path_points);
+
 			m_ConMat1->AddTo(m_curloc.loc + 1, locs[j].first + 1,
 					locs[j].second.value);
 			if (opts.omeanpathlength.value())
@@ -2174,25 +2228,33 @@ void Counter::update_matrix3() {
 						}
 					}
 				}
+
+				int seed,target;
+				float plen;
+				ColumnVector path_points(3);
+
 				if (connect) {
+
+					seed = inmask3[i].first+1;
+					target = inmask3[j].first+1;
+					plen = fabs(inmask3[i].second.value -
+							inmask3[j].second.value);
+
+					path_points << seed << target << plen;
+					m_ConMat3c.push_back(path_points);
+
 					if (opts.omeanpathlength.value()) {
 						float val = fabs(
-								inmask3[i].second.value
-										- inmask3[j].second.value);
-						m_ConMat3->AddTo(inmask3[i].first + 1,
-								inmask3[j].first + 1, val);
-						m_ConMat3b->AddTo(inmask3[i].first + 1,
-								inmask3[j].first + 1, 1);
+								inmask3[i].second.value - inmask3[j].second.value);
+						m_ConMat3->AddTo(inmask3[i].first + 1, inmask3[j].first + 1, val);
+						m_ConMat3b->AddTo(inmask3[i].first + 1, inmask3[j].first + 1, 1);
 					} else {
 						if (!opts.pathdist.value()) {
-							m_ConMat3->AddTo(inmask3[i].first + 1,
-									inmask3[j].first + 1, 1);
+							m_ConMat3->AddTo(inmask3[i].first + 1, inmask3[j].first + 1, 1);
 						} else {
 							float val = fabs(
-									inmask3[i].second.value
-											- inmask3[j].second.value);
-							m_ConMat3->AddTo(inmask3[i].first + 1,
-									inmask3[j].first + 1, val);
+									inmask3[i].second.value - inmask3[j].second.value);
+							m_ConMat3->AddTo(inmask3[i].first + 1, inmask3[j].first + 1, val);
 						}
 					}
 				}
@@ -2247,7 +2309,22 @@ void Counter::update_matrix3() {
 						}
 					}
 				}
+
+				int seed,target;
+				float plen;
+				ColumnVector path_points(3);
+
 				if (connect) {
+
+
+					seed = inmask3[i].first+1;
+					target = inlrmask3[j].first+1;
+					plen = fabs(inmask3[i].second.value -
+							inlrmask3[j].second.value);
+
+					path_points << seed << target << plen;
+					m_ConMat3c.push_back(path_points);
+
 					if (opts.omeanpathlength.value()) {
 						float val = fabs(
 								inmask3[i].second.value
@@ -2414,12 +2491,19 @@ void Counter::save() {
 	}
 	if (opts.matrix1out.value()) {
 		save_matrix1();
+		if (opts.savepoints.value()) {
+			save_path_points(m_ConMat1c, 1);
+		}
+
 	}
 	if (opts.matrix2out.value()) {
 		save_matrix2();
 	}
 	if (opts.matrix3out.value()) {
 		save_matrix3();
+		if (opts.savepoints.value()) {
+			save_path_points(m_ConMat3c, 3);
+		}
 	}
 	if (opts.matrix4out.value()) {
 		save_matrix4();
@@ -2929,9 +3013,6 @@ int Seedmanager::run(const float& x, const float& y, const float& z,
 		// otherwise only track in one direction
 		rejflag2 = m_counter.get_stline().streamline(newx, newy, newz,
 				m_seeddims, fibst);
-
-		cout << "rejflag1:  " << rejflag1 << endl;
-		cout << "rejflag2:  " << rejflag2 << endl;
 
 		if (rejflag2 == 0) {
 			backwardflag = true;

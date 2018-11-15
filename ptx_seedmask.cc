@@ -152,6 +152,7 @@ void seedmask()
 	direction_counts = 0;
 	//
 	//
+	//
 
 	int keeptotal=0;
 
@@ -183,9 +184,7 @@ void seedmask()
 					}
 				}
 			}
-
 		}
-
 	}
 
 	cout << "OneWayOnly flag: " << opts.onewayonly.value() << endl;
@@ -207,7 +206,8 @@ void seedmask()
 			// Main loop here over each seed point
 			// For each seed p, generate opts.nparticles.value() streamlines
 
-			for(int p=0;p<seeds.get_mesh(i).nvertices();p++){
+			// for(int p=0;p<seeds.get_mesh(i).nvertices();p++){
+			for (int p=0; p<5; p++) {
 
 				// check if active point
 				if(seeds.get_mesh(i).get_pvalue(p)==0.0)
@@ -256,7 +256,7 @@ void seedmask()
 
 				if(opts.verbose.value()>=1){
 					cout <<"run"<<endl;
-					cout << pos(1) << " " << pos(2)<< " "<< pos(3) << endl;
+					cout << pos(1) << " " << pos(2) << " " << pos(3) << endl;
 				}
 
 				// perform tracking

@@ -739,6 +739,8 @@ class Counter {
 	// MATRIX 1
 	SpMat<float> *m_ConMat1; // using sparse
 	SpMat<float> *m_ConMat1b; // for mean path length
+	vector<ColumnVector> m_ConMat1c; // store each path [start end length]
+
 	int m_Conrow1;
 
 	// MATRIX 2
@@ -752,6 +754,7 @@ class Counter {
 	// MATRIX 3
 	SpMat<float> *m_ConMat3; // using sparse
 	SpMat<float> *m_ConMat3b; // for mean path length
+	vector<ColumnVector> m_ConMat3c; // store each path [start end length]
 
 	// MATRIX 4 - columns are seed space, rows are diffusion space
 	SpMat_HCP *m_ConMat4;
@@ -935,6 +938,7 @@ public:
 	void add_path();
 	void save_paths();
 	void save_subpaths();
+	void save_path_points(vector<ColumnVector> points, int omat_type);
 
 };
 

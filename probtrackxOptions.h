@@ -163,6 +163,7 @@ public:
 	Option<string> innersurf;
 	Option<string> outersurf;
 	Option<string> tracksource;
+	Option<bool> savepoints;
 
 	// hidden options
 	FmribOption<string> prefdirfile; // inside this mask, pick orientation closest to whatever is in here
@@ -513,6 +514,12 @@ inline probtrackxOptions::probtrackxOptions() :
 				false,
 				requires_argument),
 
+		savepoints(string("--savepoints"),
+				false,
+				string("Save path start, end, and length."),
+				false,
+				no_argument),
+
 
 		// Hidden argument options
 		prefdirfile(
@@ -666,6 +673,7 @@ inline probtrackxOptions::probtrackxOptions() :
 		options.add(innersurf);
 		options.add(outersurf);
 		options.add(tracksource);
+		options.add(savepoints);
 
 		// Hidden argument options
 		options.add(skipmask);
