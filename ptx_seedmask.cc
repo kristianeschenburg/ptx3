@@ -206,8 +206,7 @@ void seedmask()
 			// Main loop here over each seed point
 			// For each seed p, generate opts.nparticles.value() streamlines
 
-			// for(int p=0;p<seeds.get_mesh(i).nvertices();p++){
-			for (int p=0; p<5; p++) {
+			for(int p=0;p<seeds.get_mesh(i).nvertices();p++){
 
 				// check if active point
 				if(seeds.get_mesh(i).get_pvalue(p)==0.0)
