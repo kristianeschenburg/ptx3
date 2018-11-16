@@ -1801,7 +1801,12 @@ void Counter::add_path() {
 
 void Counter::save_path_points(vector<ColumnVector> points, int omat_type) {
 
-	string basename = "saved_path_points_matrix" + std::to_string(omat_type) + ".txt";
+	string omat;
+	std::stringstream ss;
+	ss << omat_type;
+	omat = ss.str();
+
+	string basename = "saved_path_points_matrix" + omat + ".txt";
 	string filename = logger.appendDir(basename);
 
 	ofstream of(filename.c_str());
@@ -1854,7 +1859,7 @@ void Counter::save_subpaths() {
 			flot << "# " << m_save_paths[i].size() << endl;
 			int mpath_size = m_save_paths[i].size();
 
-			for (unsigned int j = 0; j < std::min(10, mpath_size); j+=2) {
+			for (int j = 0; j < std::min(10, mpath_size); j+=2) {
 
 				// write each (X,Y,Z) coordinate
 				flot << m_save_paths[i][j](1) << " " << m_save_paths[i][j](2)
