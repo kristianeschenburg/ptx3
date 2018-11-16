@@ -2104,18 +2104,20 @@ void Counter::update_matrix1() {
 		 *
 		 */
 
-		int seed, target;
-		float plen;
-		ColumnVector path_points(3);
-
 		if (connect) {
 
 			// Save the point patterns and lengths
-			seed = m_curloc.loc+1;
-			target = locs[j].first+1;
-			plen = locs[j].second.value;
-			path_points << seed << target << plen;
-			m_ConMat1c.push_back(path_points);
+			if (opts.savepoints.value()) {
+				int seed, target;
+				float plen;
+				ColumnVector path_points(3);
+
+				seed = m_curloc.loc+1;
+				target = locs[j].first+1;
+				plen = locs[j].second.value;
+				path_points << seed << target << plen;
+				m_ConMat1c.push_back(path_points);
+			}
 
 			m_ConMat1->AddTo(m_curloc.loc + 1, locs[j].first + 1,
 					locs[j].second.value);
@@ -2229,19 +2231,23 @@ void Counter::update_matrix3() {
 					}
 				}
 
-				int seed,target;
-				float plen;
-				ColumnVector path_points(3);
+
 
 				if (connect) {
 
-					seed = inmask3[i].first+1;
-					target = inmask3[j].first+1;
-					plen = fabs(inmask3[i].second.value -
-							inmask3[j].second.value);
+					if (opts.savepoints.value()) {
+						int seed,target;
+						float plen;
+						ColumnVector path_points(3);
 
-					path_points << seed << target << plen;
-					m_ConMat3c.push_back(path_points);
+						seed = inmask3[i].first+1;
+						target = inmask3[j].first+1;
+						plen = fabs(inmask3[i].second.value -
+								inmask3[j].second.value);
+
+						path_points << seed << target << plen;
+						m_ConMat3c.push_back(path_points);
+					}
 
 					if (opts.omeanpathlength.value()) {
 						float val = fabs(
@@ -2310,20 +2316,20 @@ void Counter::update_matrix3() {
 					}
 				}
 
-				int seed,target;
-				float plen;
-				ColumnVector path_points(3);
-
 				if (connect) {
 
+					if (opts.savepoints.value()) {
+						int seed,target;
+						float plen;
+						ColumnVector path_points(3);
+						seed = inmask3[i].first+1;
+						target = inlrmask3[j].first+1;
+						plen = fabs(inmask3[i].second.value -
+								inlrmask3[j].second.value);
 
-					seed = inmask3[i].first+1;
-					target = inlrmask3[j].first+1;
-					plen = fabs(inmask3[i].second.value -
-							inlrmask3[j].second.value);
-
-					path_points << seed << target << plen;
-					m_ConMat3c.push_back(path_points);
+						path_points << seed << target << plen;
+						m_ConMat3c.push_back(path_points);
+					}
 
 					if (opts.omeanpathlength.value()) {
 						float val = fabs(
