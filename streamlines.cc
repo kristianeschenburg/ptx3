@@ -1133,15 +1133,11 @@ int Streamliner::streamline(const float& x_init, const float& y_init,
 			if (opts.forceangle.value()) {
 				if (it == 1) {
 					th_ph_f << m_idir_th << m_idir_ph << 1;
-					cout << "Before jump: " << endl;
-					cout << m_part.x() << " " << m_part.y() << " " << m_part.z() << endl;
-					cout << "SimDiff: " << m_part.simdiff() << endl;
-					cout << "Jumped: " << m_part.jumped() << endl;
 				}
 			}
 
 
-			if (th_ph_f(3) > tmp2) { //volume fraction criterion
+			if (th_ph_f(3) > tmp2) { //volume fraction criteriongin
 				if (opts.loccurvthresh.value() != "") {
 					cthr = m_loccurvthresh(x_p, y_p, z_p);
 				}
@@ -1164,15 +1160,6 @@ int Streamliner::streamline(const float& x_init, const float& y_init,
 								}
 							} else {
 								m_part.jump(th_ph_f(1), th_ph_f(2), forcedir, true);
-							}
-
-
-							if (it == 1) {
-								cout << "After jump: " << endl;
-								cout << m_part.x() << " " << m_part.y() << " " << m_part.z() << endl;
-								cout << "SimDiff: " << m_part.simdiff() << endl;
-								cout << "Jumped: " << m_part.jumped() << endl;
-								cout << "Sign: " << m_part.get_sign() << endl;
 							}
 
 						// modified euler streaming

@@ -118,8 +118,8 @@ void seedmask()
 
 		cout << "load initial direction" << endl;
 		directions = read_ascii_matrix(opts.initdir.value());
-		cout << directions.Nrows() << endl;
-		cout << directions.Ncols() << endl;
+		cout << "# Directions: " << directions.Nrows() << endl;
+		cout << "# angle columns: " << directions.Ncols() << endl;
 		cout << "done\n" << endl;
 
 		cout << "load inner and outer surface" << endl;
@@ -131,8 +131,9 @@ void seedmask()
 		inner.load_rois(opts.innersurf.value());
 
 		cout << "done\n" << endl;
-
 	}
+
+
 
 	cout << "FlipSign Value: " << opts.flipsign.value() << endl;
 
@@ -238,8 +239,6 @@ void seedmask()
 					// get spherical coordinates, convert to Cartesian
 					float theta = directions(p+1,1);
 					float phi = directions(p+1,2);
-					cout << "Theta: " << theta << endl;
-					cout << "Phi: " << phi << endl;
 
 					ColumnVector angle = SU.sphere2cart(theta, phi);
 					angle = SU.normalize(angle);
@@ -254,31 +253,21 @@ void seedmask()
 					// Distance from seed to G/W
 					// Distance from seed to Pial
 					float thickness = SU.euclidean(inner_pos,outer_pos);
-					cout << "Thickness: " << thickness << endl;
 					float to_outers = SU.euclidean(pos, outer_pos);
-					cout << "To Pial: " << to_outers << endl;
 
 					// KE
 					if (to_outers < thickness) {
-						cout << "Updating position" << endl;
 						pos = inner_pos;
 						to_outers = thickness;
 					}
 
-					cout << "Current position" << endl;
-					cout << pos(1) << " " << pos(2) << " " << pos(3) << endl;
-
 					ColumnVector move_pos = pos + angle;
-					cout << "Moved position" << endl;
-					cout << move_pos(1) << " " << move_pos(2) << " " << move_pos(3) << endl;
 
 					float upd_outers = SU.euclidean(move_pos, outer_pos);
 					if (upd_outers < to_outers) {
-						cout << "Position move closer to pial surface -- flipping angle." << endl;
+						cout << "Position moved outwards -- flipping angle." << endl;
 						angle = (-1)*angle;
 					}
-
-					cout << angle(1) << " " << angle(2) << " " << angle(3) << endl;
 
 					// KE
 					// convert back to spherical coordinates
