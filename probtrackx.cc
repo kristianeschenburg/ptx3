@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
 	}
 
 	cout << "Tracking from: " << opts.tracksource.value() << endl;
-	cout << "Tracking in both directions: " << (bool)opts.onewayonly.value() << endl;
+	cout << "Tracking in one direction only: " << (bool)opts.onewayonly.value() << endl;
 	cout << "Tracking in matrix3 mode: " << (bool)opts.matrix3out.value() << endl;
 
 	//Check the correct use of matrices
@@ -124,6 +124,9 @@ int main(int argc, char **argv) {
 		track();
 	} else {
 
+		// KE
+		// if want to force beginning direction, check that
+		// angle, inner, and outer surfaces are supplied
 		if (opts.forceangle.value()) {
 			if (opts.initdir.value() == "" || opts.innersurf.value() == "" || opts.outersurf.value() == "") {
 				cerr << "Error: initdir, innersurf, and outersurf flags must ALL be provided." << endl;

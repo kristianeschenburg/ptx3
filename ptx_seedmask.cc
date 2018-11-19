@@ -78,7 +78,6 @@ using namespace MISCMATHS;
 using namespace seed_utilities;
 
 
-
 void seedmask()
 { 
 
@@ -109,12 +108,18 @@ void seedmask()
 	}
 
 
+	// KE
+	// If initial directions file supplied,
+	// load angles and initialize inner and outer surfaces
 	Matrix directions;
+	SeedUtilities SU;
 	CSV outer(refvol), inner(refvol);
 	if (opts.forceangle.value()) {
 
 		cout << "load initial direction" << endl;
 		directions = read_ascii_matrix(opts.initdir.value());
+		cout << directions.Nrows() << endl;
+		cout << directions.Ncols() << endl;
 		cout << "done\n" << endl;
 
 		cout << "load inner and outer surface" << endl;
@@ -128,6 +133,8 @@ void seedmask()
 		cout << "done\n" << endl;
 
 	}
+
+	cout << "FlipSign Value: " << opts.flipsign.value() << endl;
 
 
 	// Initialize tracking classes
@@ -203,6 +210,7 @@ void seedmask()
 				cout << "   set all values to 0 or non-zero to use entire surface" << endl;
 			}
 
+			// KE
 			// Main loop here over each seed point
 			// For each seed p, generate opts.nparticles.value() streamlines
 
@@ -222,32 +230,63 @@ void seedmask()
 				counter.updateSeedLocation(seeds.get_surfloc(i,p), i, triangles);
 				pos = seeds.get_vertex_as_vox(i,p);
 
+				// KE
 				// if forcing tracking with initial directions
 				if (opts.forceangle.value()) {
 
+					// KE
 					// get spherical coordinates, convert to Cartesian
 					float theta = directions(p+1,1);
 					float phi = directions(p+1,2);
-					ColumnVector angle = sphere2cart(theta,phi);
+					cout << "Theta: " << theta << endl;
+					cout << "Phi: " << phi << endl;
+
+					ColumnVector angle = SU.sphere2cart(theta, phi);
+					angle = SU.normalize(angle);
+					cout << angle(1) << " " << angle(2) << " " << angle(3) << endl;
 
 					// get inner and outer surface positions
 					ColumnVector inner_pos = inner.get_vertex_as_vox(0, p);
 					ColumnVector outer_pos = outer.get_vertex_as_vox(0, p);
 
-					// if seed position between inner and outer, seed becomes inner
-					// angle is reversed
-					if (euclidean(pos, outer_pos) < euclidean(inner_pos, outer_pos)) {
+					// KE
+					// Distance from G/W to Pial (cortical thickness)
+					// Distance from seed to G/W
+					// Distance from seed to Pial
+					float thickness = SU.euclidean(inner_pos,outer_pos);
+					cout << "Thickness: " << thickness << endl;
+					float to_outers = SU.euclidean(pos, outer_pos);
+					cout << "To Pial: " << to_outers << endl;
+
+					// KE
+					if (to_outers < thickness) {
+						cout << "Updating position" << endl;
 						pos = inner_pos;
+						to_outers = thickness;
+					}
+
+					cout << "Current position" << endl;
+					cout << pos(1) << " " << pos(2) << " " << pos(3) << endl;
+
+					ColumnVector move_pos = pos + angle;
+					cout << "Moved position" << endl;
+					cout << move_pos(1) << " " << move_pos(2) << " " << move_pos(3) << endl;
+
+					float upd_outers = SU.euclidean(move_pos, outer_pos);
+					if (upd_outers < to_outers) {
+						cout << "Position move closer to pial surface -- flipping angle." << endl;
 						angle = (-1)*angle;
 					}
 
-					// normalize direction vector to unit length
-					// and convert back to spherical coordinates
-					angle = normalize_angle(angle);
-					ColumnVector spherical = cart2sphere(angle);
+					cout << angle(1) << " " << angle(2) << " " << angle(3) << endl;
+
+					// KE
+					// convert back to spherical coordinates
+					ColumnVector spherical = SU.cart2sphere(angle);
 					theta = spherical(1);
 					phi = spherical(2);
 
+					// KE
 					// set streamliner object with initial angle
 					seedmanager.get_stline().set_angles(theta,phi);
 

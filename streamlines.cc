@@ -1133,6 +1133,10 @@ int Streamliner::streamline(const float& x_init, const float& y_init,
 			if (opts.forceangle.value()) {
 				if (it == 1) {
 					th_ph_f << m_idir_th << m_idir_ph << 1;
+					cout << "Before jump: " << endl;
+					cout << m_part.x() << " " << m_part.y() << " " << m_part.z() << endl;
+					cout << "SimDiff: " << m_part.simdiff() << endl;
+					cout << "Jumped: " << m_part.jumped() << endl;
 				}
 			}
 
@@ -1154,7 +1158,22 @@ int Streamliner::streamline(const float& x_init, const float& y_init,
 						// no modified euler streaming
 						if (!opts.modeuler.value()) {
 
-							m_part.jump(th_ph_f(1), th_ph_f(2), forcedir);
+							if (it == 1) {
+								if (opts.flipsign.value()) {
+									m_part.jump(th_ph_f(1), th_ph_f(2), forcedir, false);
+								}
+							} else {
+								m_part.jump(th_ph_f(1), th_ph_f(2), forcedir, true);
+							}
+
+
+							if (it == 1) {
+								cout << "After jump: " << endl;
+								cout << m_part.x() << " " << m_part.y() << " " << m_part.z() << endl;
+								cout << "SimDiff: " << m_part.simdiff() << endl;
+								cout << "Jumped: " << m_part.jumped() << endl;
+								cout << "Sign: " << m_part.get_sign() << endl;
+							}
 
 						// modified euler streaming
 						} else {
@@ -2010,6 +2029,7 @@ void Counter::update_pathdist_multi() {
 	}
 }
 
+
 void Counter::update_matrix1() {
 	//Tracer_Plus tr("Counter::update_matrix1");
 	// use path and has_crossed
@@ -2324,6 +2344,8 @@ void Counter::update_matrix3() {
 				if (connect) {
 
 					if (opts.savepoints.value()) {
+
+
 						int seed,target;
 						float plen;
 						ColumnVector path_points(3);
@@ -3002,6 +3024,7 @@ int Seedmanager::run(const float& x, const float& y, const float& z,
 		// always track in both directions when using matrix3 mode
 		if (trk_val == "" || trk_val == "voxels" || trk_val == "both") {
 			if (!onewayonly || opts.matrix3out.value()) {
+				cout << "Tracking in 2 directions." << endl;
 				rejflag1 = m_counter.get_stline().streamline(newx, newy, newz,
 						m_seeddims, fibst);
 

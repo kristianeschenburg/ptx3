@@ -103,6 +103,8 @@ class Particle {
 	bool m_has_jumped;
 	bool m_simdiff;
 	int m_jumpsign;
+	int m_sign;
+
 public:
 	//constructors::
 	Particle(const float& xin, const float& yin, const float& zin,
@@ -244,10 +246,24 @@ public:
 		m_rz = 0;
 		m_has_jumped = false;
 	}
+
+	bool jumped() {
+		return m_has_jumped;
+	}
+
+	bool simdiff() {
+		return m_simdiff;
+	}
+
+	int get_sign() {
+		return m_sign;
+	}
+
 	//functions
 
 	// computes streamline step in theta / phi direction
-	void jump(const float& theta, const float& phi, bool forcedir = false) {
+	void jump(const float& theta, const float& phi, bool forcedir = false,
+			bool flipsign = true) {
 
 		// compute Cartesian direction from spherical coordinates
 		float tmpsin = sin(theta);
@@ -257,20 +273,29 @@ public:
 
 		int sign = 1;
 		bool init = false;
-		if (!m_simdiff) {
-			if (m_has_jumped) {
-				if (!forcedir) {
-					sign = (rx_new * m_rx + ry_new * m_ry + rz_new * m_rz) > 0 ?
-							1 : -1;
+
+		if (flipsign) {
+			if (!m_simdiff) {
+				if (m_has_jumped) {
+					if (!forcedir) {
+						sign = (rx_new * m_rx + ry_new * m_ry + rz_new * m_rz) > 0 ?
+								1 : -1;
+						m_sign = sign;
+					}
+				} else {
+					sign = (float) rand() / float(RAND_MAX) > 0.5 ? 1 : -1;
+					m_sign = sign;
+					m_jumpsign = sign;
+					m_has_jumped = true;
+					init = true;
 				}
 			} else {
 				sign = (float) rand() / float(RAND_MAX) > 0.5 ? 1 : -1;
-				m_jumpsign = sign;
-				m_has_jumped = true;
-				init = true;
+				m_sign = sign;
 			}
 		} else {
-			sign = (float) rand() / float(RAND_MAX) > 0.5 ? 1 : -1;
+			m_jumpsign = sign;
+			m_has_jumped = true;
 		}
 
 		// compute step length size for X, Y, and Z position

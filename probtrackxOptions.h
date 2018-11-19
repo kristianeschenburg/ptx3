@@ -152,7 +152,7 @@ public:
 	Option<int> fibst;
 	Option<int> rseed;
 
-	/*
+	/* KE
 	 *
 	 *Options for tracking using initial directions
 	 *
@@ -164,6 +164,11 @@ public:
 	Option<string> outersurf;
 	Option<string> tracksource;
 	Option<bool> savepoints;
+	Option<bool> flipsign;
+
+	/*
+	 * End KE
+	 */
 
 	// hidden options
 	FmribOption<string> prefdirfile; // inside this mask, pick orientation closest to whatever is in here
@@ -470,7 +475,8 @@ inline probtrackxOptions::probtrackxOptions() :
 				false,
 				requires_argument),
 
-		/* Arguments for tracking using an initial direction.
+		/* KE
+		 * Arguments for tracking using an initial direction.
 		 * Requires a series of three arguments
 		 *
 		 * forcedir : boolean indication directions are fored
@@ -519,6 +525,16 @@ inline probtrackxOptions::probtrackxOptions() :
 				string("Save path start, end, and length."),
 				false,
 				no_argument),
+
+		flipsign(string("--flipsign"),
+				false,
+				string("Randomly sample sign of sampled direction."),
+				false,
+				no_argument),
+
+		/*
+		 * End KE
+		 */
 
 
 		// Hidden argument options
@@ -667,6 +683,7 @@ inline probtrackxOptions::probtrackxOptions() :
 		options.add(fibst);
 		options.add(rseed);
 
+		// KE
 		// Arguments for tracking using initial directions
 		options.add(forceangle);
 		options.add(initdir);
@@ -674,6 +691,7 @@ inline probtrackxOptions::probtrackxOptions() :
 		options.add(outersurf);
 		options.add(tracksource);
 		options.add(savepoints);
+		options.add(flipsign);
 
 		// Hidden argument options
 		options.add(skipmask);
