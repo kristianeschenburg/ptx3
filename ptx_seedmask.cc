@@ -242,7 +242,6 @@ void seedmask()
 
 					ColumnVector angle = SU.sphere2cart(theta, phi);
 					angle = SU.normalize(angle);
-					cout << angle(1) << " " << angle(2) << " " << angle(3) << endl;
 
 					// get inner and outer surface positions
 					ColumnVector inner_pos = inner.get_vertex_as_vox(0, p);
@@ -261,16 +260,17 @@ void seedmask()
 						to_outers = thickness;
 					}
 
+					// KE
 					ColumnVector move_pos = pos + angle;
 
 					float upd_outers = SU.euclidean(move_pos, outer_pos);
 					if (upd_outers < to_outers) {
-						cout << "Position moved outwards -- flipping angle." << endl;
 						angle = (-1)*angle;
 					}
 
 					// KE
 					// convert back to spherical coordinates
+					angle = SU.normalize(angle);
 					ColumnVector spherical = SU.cart2sphere(angle);
 					theta = spherical(1);
 					phi = spherical(2);
@@ -278,6 +278,9 @@ void seedmask()
 					// KE
 					// set streamliner object with initial angle
 					seedmanager.get_stline().set_angles(theta,phi);
+					/*
+					 * End KE
+					 */
 
 				}
 

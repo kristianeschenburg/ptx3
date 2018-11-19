@@ -2,7 +2,7 @@ include ${FSLCONFDIR}/default.mk
 
 PROJNAME = fdt
 
-OPTFLAGS = -ggdb
+#OPTFLAGS = -ggdb
 
 #ARCHFLAGS = -arch i386
 #ARCHLDFLAGS = -arch i386
