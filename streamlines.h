@@ -74,6 +74,9 @@
 #include "miscmaths/SpMat.h" 
 #include "csv.h"
 #include "utils/tracer_plus.h"
+#include "seed_utils.h"
+#include <math.h>
+#include <cmath>
 
 using namespace std;
 using namespace NEWIMAGE;
@@ -81,6 +84,7 @@ using namespace Utilities;
 using namespace TRACTVOLSX;
 using namespace mesh;
 using namespace PARTICLE;
+using namespace seed_utilities;
 
 struct infoVertex { // to avoid connections between vertices of the same triangle
 	float value;
@@ -197,97 +201,6 @@ public:
 	}
 };
 
-/*
- //Old SpMat_HCP with MattCell (less rounding errors, but takes ~5 times as much memory and ~40% more execution time
-
- class MatCell{
- // This class contains information on entries for matrix4 format
- public:
- MatCell():nsamples(0),length_tot(0.0){fibcnt.clear();fibcnt.resize(3,0);}
- MatCell(double val):nsamples(0),length_tot(0.0){fibcnt.clear();fibcnt.resize(3,0);}
- float   get_avg_length()const{
- return (nsamples!=0?length_tot/(float)nsamples:0.0);
- }
- float   get_length_tot()const{return length_tot;}
- int     get_nsamples()const{return nsamples;}
- float   get_fibprop(const int& f)const{return float(fibcnt[f-1])/float(nsamples);}
- float   get_fibcnt(const int& f)const{return fibcnt[f-1];}
- void    add_one(float dist,int fib){
- fibcnt[fib-1]+=1;
- length_tot+=dist;
- nsamples+=1;
- }
- void    add_n(float dist,vector<float> props,int n){
- if(fibcnt.size()!=3){
- cerr<<"MatCell::add_n:Only valid with 3 fibres"<<endl;
- exit(1);
- }
- int n0=(int)round(props[0]*n);
- int n1=(int)round(props[1]*n);
- fibcnt[0]+=n0;
- fibcnt[1]+=n1;
- fibcnt[2]+=(n-n0-n1);
- length_tot+=(dist*n);
- nsamples+=n;
- }
- void Print(){
- cout<<"nsamples   = "<<nsamples<<endl;
- cout<<"fibcnt[0]  = "<<fibcnt[0]<<endl;
- cout<<"fibcnt[1]  = "<<fibcnt[1]<<endl;
- cout<<"fibcnt[2]  = "<<fibcnt[2]<<endl;
- cout<<"length_tot = "<<length_tot<<endl;
- cout<<"avg_length = "<<length_tot/float(nsamples)<<endl;
- cout<<"----------------------"<<endl;
- }
- MatCell(const MatCell& rhs){
- *this=rhs;
- }
- MatCell& operator=(const MatCell& rhs){
- fibcnt=rhs.fibcnt;
- nsamples=rhs.nsamples;
- length_tot=rhs.length_tot;
- return *this;
- }
- MatCell& operator+=(const MatCell& rhs){
- length_tot += rhs.get_length_tot();
- nsamples   += rhs.get_nsamples();
- for(unsigned int i=0;i<fibcnt.size();i++)
- fibcnt[i] += rhs.get_fibcnt(i+1);
- return *this;
- }
- private:
- vector<int> fibcnt;
- int         nsamples;
- float       length_tot;
- };
- inline MatCell operator*(const double& x, const MatCell& rhs){return rhs;}
-
- class SpMat_HCP : public SpMat<MatCell>{
- public:
- SpMat_HCP():SpMat<MatCell>::SpMat(){}
- SpMat_HCP(unsigned int m, unsigned int n):SpMat<MatCell>::SpMat(m,n){}
- SpMat_HCP(unsigned int m, unsigned int n,const string& basename);
- ~SpMat_HCP(){}
- // HCP Trajectory-file writer (MJ+SJ)
- int SaveTrajFile(const string& basename)const;
- void AddToTraj(unsigned int r,unsigned int c, float dist,int fib){ here(r,c).add_one(dist,fib); }
- void AddToTraj(unsigned int r,unsigned int c, float dist, vector<float> props, int n){ here(r,c).add_n(dist,props,n); }
- 
- void Print(){
- for(unsigned int c=0;c<Ncols();c++){
- const std::vector<unsigned int>&    ri = get_ri(c);
- for (unsigned int r=0; r<ri.size(); r++) {
- cout<<"Element " << ri[r]+1 <<","<<c+1<<endl;
- here(ri[r]+1,c+1).Print();
- }
- }
- }
- void Print(int r,int c){
- here(r,c).Print();
- }
- };
-
- */
 
 namespace TRACT {
 
@@ -353,13 +266,22 @@ class Streamliner {
 	float m_y_s_init;
 	float m_z_s_init;
 
-	// members for initial tracking
-	// initial spherical angles
+	/*
+	 * KE
+	 */
+
+	// Members for initial tracking direction
 	float m_idir_th;
 	float m_idir_ph;
 
-	// current seed
-	int cseed;
+	// Members for comparing first first sampled direction
+	// to surface normal
+	ColumnVector normal_sphere;
+	SeedUtilities normal_checker;
+
+	/*
+	 * End KE
+	 */
 
 	// Streamliner needs to know about matrix3
 	CSV m_mask3;
@@ -376,10 +298,6 @@ public:
 	//Constructors
 	Streamliner(const CSV& seeds);
 	~Streamliner() {
-	}
-
-	int get_current() {
-		return cseed;
 	}
 
 	const CSV& get_seeds() const {
@@ -432,45 +350,66 @@ public:
 		m_surfexists = true;
 	}
 
-	//
-	//
-	//
-
 	/*
-	 * Parameters for setting initial tracking direction of seed point.
+	 * KE
 	 */
 
+	// Return Particle object
 	Particle get_part() {
 		return m_part;
 	}
 
-	void set_angles(const float& theta, const float& phi) {
-		m_idir_th = theta;
-		m_idir_ph = phi;
+	// Set initial spherical angle tracking direction
+	void set_angles(ColumnVector spheres) {
+		m_idir_th = spheres(1);
+		m_idir_ph = spheres(2);
 	}
 
+	// Set seed vertex normal vector
+	void set_normal(ColumnVector normal) {
+		normal_sphere = normal;
+	}
+
+	/*
+	 * Check that sampled theta, phi, f point in correct direction.
+	 *
+	 * Computes the spherical distance (Great Circle Distance)
+	 * between the sampled direction and the seed vertex normal
+	 * direction.  If distance greater than pi / 2, flips the
+	 * sampled direction.
+	 */
+	ColumnVector check_sample_sign(ColumnVector sampled) {
+
+		ColumnVector spheres(2);
+		spheres << sampled(1) << sampled(2);
+
+		float gc = normal_checker.spherical_distance(normal_sphere, spheres);
+		float pi = atan(1)*4.0;
+
+		if (gc > pi/2) {
+			ColumnVector prop2cart = (-1)*normal_checker.sphere2cart(sampled);
+			spheres = normal_checker.cart2sphere(prop2cart);
+			sampled << spheres(1) << spheres(2) << sampled(3);
+		};
+
+		return sampled;
+
+	}
+
+	// Get initial tracking direction Spherical coordinates
 	Matrix get_angles() {
 
 		Matrix angles(1,2);
-		angles(1,1) = m_idir_th;
-		angles(1,2) = m_idir_ph;
+		angles(1, 1) = m_idir_th;
+		angles(1, 2) = m_idir_ph;
 
 		return angles;
 	}
 
-	// set current seed index
-	void set_index(const int& current) {
-		cseed = current;
-	}
+	/*
+	 * End KE
+	 */
 
-	// get current index
-	int get_index() {
-		return cseed;
-	}
-
-	//
-	//
-	//
 
 	inline void reset() {
 		m_part.reset();

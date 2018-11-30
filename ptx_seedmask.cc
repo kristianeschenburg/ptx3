@@ -96,7 +96,6 @@ void seedmask()
 	}
 
 
-
 	cout<<"load seeds"<<endl;
 	CSV seeds(refvol);
 	seeds.set_convention(opts.meshspace.value());
@@ -108,20 +107,17 @@ void seedmask()
 	}
 
 
-	// KE
-	// If initial directions file supplied,
-	// load angles and initialize inner and outer surfaces
-	Matrix directions;
+	/*
+	 * KE
+	 * If initial directions file is supplied
+	 * load angles and initialize inner and outer surfaces.
+	 */
+
 	SeedUtilities SU;
+
 	CSV outer(refvol), inner(refvol);
-	if (opts.forceangle.value()) {
-
-		cout << "load initial direction" << endl;
-		directions = read_ascii_matrix(opts.initdir.value());
-		cout << "# Directions: " << directions.Nrows() << endl;
-		cout << "# angle columns: " << directions.Ncols() << endl;
-		cout << "done\n" << endl;
-
+	if (opts.forceangle.value() || opts.normals.value() != "") {
+		cout << "forcing tracking with initial directions" << endl;
 		cout << "load inner and outer surface" << endl;
 
 		outer.set_convention(opts.meshspace.value());
@@ -133,10 +129,42 @@ void seedmask()
 		cout << "done\n" << endl;
 	}
 
+	Matrix directions;
+	if (opts.forceangle.value()) {
+		cout << "load initial direction" << endl;
+		directions = read_ascii_matrix(opts.initdir.value());
+		cout << "# Directions: " << directions.Nrows() << endl;
+		cout << "# angle columns: " << directions.Ncols() << endl;
+		cout << "done\n" << endl;
+	}
+
+	Matrix normals;
+	if (opts.normals.value() != "") {
+		cout << "load normal vectors" << endl;
+		normals = read_ascii_matrix(opts.normals.value());
+		cout << "# Normals: " << normals.Nrows() << endl;
+		cout << "# Normal columns: " << normals.Ncols() << endl;
+		cout << "done\n" << endl;
+	}
+
+	CSV mat5_mask(refvol);
+	if (opts.matrix5out.value()) {
+		cout << "load masking surface" << endl;
+		mat5_mask.set_convention(opts.meshspace.value());
+		mat5_mask.load_rois(opts.matrix5_mask.value());
 
 
-	cout << "FlipSign Value: " << opts.flipsign.value() << endl;
+		cout << "# Matrix5 Masks: " << mat5_mask.nSurfs() << endl;
 
+		for (int s = 0; s < mat5_mask.nSurfs(); s++) {
+			cout << "Vertices in matrix5 mask: " << mat5_mask.get_mesh(s).nvertices() << endl;
+		}
+		cout << "done\n" << endl;
+	}
+
+	/*
+	 * End KE
+	 */
 
 	// Initialize tracking classes
 	Streamliner  stline      (seeds);
@@ -162,7 +190,8 @@ void seedmask()
 	//
 	//
 
-	int keeptotal=0;
+	int keeptotal = 0;
+	int c = 0;
 
 	time_t _time;
 	_time=time(NULL);
@@ -195,8 +224,6 @@ void seedmask()
 		}
 	}
 
-	cout << "OneWayOnly flag: " << opts.onewayonly.value() << endl;
-
 	// seed from surface-like ROIs
 	if(seeds.nSurfs()>0){
 		cout << "Surface seeds" << endl;
@@ -211,15 +238,26 @@ void seedmask()
 				cout << "   set all values to 0 or non-zero to use entire surface" << endl;
 			}
 
-			// KE
-			// Main loop here over each seed point
-			// For each seed p, generate opts.nparticles.value() streamlines
-
 			for(int p=0;p<seeds.get_mesh(i).nvertices();p++){
 
-				// check if active point
-				if(seeds.get_mesh(i).get_pvalue(p)==0.0)
+				// check if active point in surface
+				if(seeds.get_mesh(i).get_pvalue(p) == 0.0)
 					continue;
+
+				/*
+				 * KE
+				 * Check if active point in surface, but enforce matrix1 tracking.
+				 */
+				if (opts.matrix5_mask.value() != "") {
+					if (mat5_mask.get_mesh(0).get_pvalue(p) == 0.0) {
+						continue;
+					} else {
+						c++;
+					}
+				}
+				/*
+				 * End KE
+				 */
 
 				//to avoid connections between vertices of the same triangle
 				CsvMpoint vertex=seeds.get_mesh(i).get_point(p);
@@ -231,58 +269,80 @@ void seedmask()
 				counter.updateSeedLocation(seeds.get_surfloc(i,p), i, triangles);
 				pos = seeds.get_vertex_as_vox(i,p);
 
-				// KE
-				// if forcing tracking with initial directions
+				/*
+				 * KE
+				 * Check intial tracking directions
+				 */
 				if (opts.forceangle.value()) {
 
-					// KE
-					// get spherical coordinates, convert to Cartesian
-					float theta = directions(p+1,1);
-					float phi = directions(p+1,2);
+					ColumnVector angle(3);
+					ColumnVector sphere_init(2);
 
-					ColumnVector angle = SU.sphere2cart(theta, phi);
+					/*
+					 * If provided directions are Spherical coordinates,
+					 * convert them to Cartesian coordinates
+					 */
+					if (directions.Ncols() == 2) {
+						sphere_init << directions(p+1,1) << directions(p+1,2);
+						angle = SU.sphere2cart(sphere_init);
+
+					/*
+					 * If provided directions are Cartesian coordinates.
+					 */
+					} else if (directions.Ncols() == 3) {
+						angle << directions(p+1,1) << directions(p+1,2) << directions(p+1,3);
+					}
+
+					// Normalize to unit length
 					angle = SU.normalize(angle);
 
-					// get inner and outer surface positions
+					// Get inner and outer surface points
 					ColumnVector inner_pos = inner.get_vertex_as_vox(0, p);
 					ColumnVector outer_pos = outer.get_vertex_as_vox(0, p);
 
-					// KE
-					// Distance from G/W to Pial (cortical thickness)
-					// Distance from seed to G/W
-					// Distance from seed to Pial
-					float thickness = SU.euclidean(inner_pos,outer_pos);
-					float to_outers = SU.euclidean(pos, outer_pos);
+					// Find correct seed point
+					pos = SU.check_seed(pos, inner_pos, outer_pos);
 
-					// KE
-					if (to_outers < thickness) {
-						pos = inner_pos;
-						to_outers = thickness;
-					}
+					// Find correct direction
+					angle = SU.check_angle(pos, outer_pos, angle);
 
-					// KE
-					ColumnVector move_pos = pos + angle;
-
-					float upd_outers = SU.euclidean(move_pos, outer_pos);
-					if (upd_outers < to_outers) {
-						angle = (-1)*angle;
-					}
-
-					// KE
-					// convert back to spherical coordinates
+					// Convert back to Spherical coordinates
 					angle = SU.normalize(angle);
-					ColumnVector spherical = SU.cart2sphere(angle);
-					theta = spherical(1);
-					phi = spherical(2);
+					sphere_init = SU.cart2sphere(angle);
 
-					// KE
-					// set streamliner object with initial angle
-					seedmanager.get_stline().set_angles(theta,phi);
-					/*
-					 * End KE
-					 */
+					// Initialize streamliner object initial angle
+					seedmanager.get_stline().set_angles(sphere_init);
+				}
+
+				/*
+				 * Check normal vectors.
+				 */
+				if (opts.normals.value() != "") {
+
+					ColumnVector normal(3), outer_pos, sphere_norm(2);
+
+					// Get outer surface position
+					outer_pos = outer.get_vertex_as_vox(0, p);
+
+					// Get seed normal vector
+					normal << normals(p+1,1) << normals(p+1,2) << normals(p+1,3);
+					normal = SU.normalize(normal);
+
+					// Check normal vector direction
+					normal = SU.check_angle(pos, outer_pos, normal);
+
+					// Convert normal to spherical
+					normal = SU.normalize(normal);
+					sphere_norm = SU.cart2sphere(normal);
+
+					// Assign normal to streamliner object
+					seedmanager.get_stline().set_normal(sphere_norm);
 
 				}
+
+				/*
+				 * End KE
+				 */
 
 				if(opts.verbose.value()>=1){
 					cout <<"run"<<endl;
@@ -298,6 +358,7 @@ void seedmask()
 	}
 
 	cout << endl << "time spent tracking: " << (time(NULL)-_time) << " seconds"<< endl << endl;
+	cout << "Tracked from " << c << " seed points." << endl;
 
 	// save results
 	cout << "save results" << endl;

@@ -158,8 +158,11 @@ public:
 	 *
 	 */
 
+	Option<bool> matrix5out;
+	Option<string> matrix5_mask;
 	Option<bool> forceangle;
 	Option<string> initdir;
+	Option<string> normals;
 	Option<string> innersurf;
 	Option<string> outersurf;
 	Option<string> tracksource;
@@ -490,6 +493,18 @@ inline probtrackxOptions::probtrackxOptions() :
 		 *
 		 */
 
+		matrix5out(string("--omatrix1.5"),
+				false,
+				string("Allow tracking from subset of surface, using same tracking scheme as omatrix1."),
+				false,
+				no_argument),
+
+		matrix5_mask(string("--omatrix1.5_mask"),
+				string(""),
+				string("Surface mask file. (value(vertex-to-track-from) != 0)."),
+				false,
+				requires_argument),
+
 		forceangle(string("--forceangle"),
 				false,
 				string("Force initial tracking directions.  If supplied, --innersurf, --outersurf, and --initdir must also be provided."),
@@ -501,6 +516,12 @@ inline probtrackxOptions::probtrackxOptions() :
 				string("Initial directions CSV file: N seeds by 2 columns (azimuthal and polar angles)."),
 				false,
 				requires_argument),
+
+		normals(string("--normals"),
+						string(""),
+						string("Normal vectors of seed points."),
+						false,
+						requires_argument),
 
 		innersurf(string("--innersurf"),
 				string(""),
@@ -685,13 +706,22 @@ inline probtrackxOptions::probtrackxOptions() :
 
 		// KE
 		// Arguments for tracking using initial directions
+
+		options.add(matrix5out);
+		options.add(matrix5_mask);
+
 		options.add(forceangle);
+
 		options.add(initdir);
+		options.add(normals);
+
 		options.add(innersurf);
 		options.add(outersurf);
+
 		options.add(tracksource);
 		options.add(savepoints);
 		options.add(flipsign);
+		// End KE
 
 		// Hidden argument options
 		options.add(skipmask);

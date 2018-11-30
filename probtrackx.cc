@@ -88,10 +88,6 @@ int main(int argc, char **argv) {
 		opts.status();
 	}
 
-	cout << "Tracking from: " << opts.tracksource.value() << endl;
-	cout << "Tracking in one direction only: " << (bool)opts.onewayonly.value() << endl;
-	cout << "Tracking in matrix3 mode: " << (bool)opts.matrix3out.value() << endl;
-
 	//Check the correct use of matrices
 	if (opts.matrix2out.value() && opts.lrmask.value() == "") {
 		cerr
@@ -133,6 +129,15 @@ int main(int argc, char **argv) {
 				exit(1);
 			}
 		}
+
+		if (opts.matrix5out.value() && opts.matrix5_mask.value() == "") {
+			cerr << "Error: --matrix1.5 and --matrix1.5_mask must both be supplied." << endl;
+			exit(1);
+		}
+
+		/*
+		 * End KE
+		 */
 
 		if (!opts.network.value()) {
 			cout << "Running in seedmask mode" << endl;

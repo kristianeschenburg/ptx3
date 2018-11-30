@@ -606,8 +606,6 @@ Streamliner::Streamliner(const CSV& seeds) :
 				LogSingleton::getInstance()), vols(opts.usef.value()), m_seeds(
 				seeds) {
 
-	cout << "Current Seed: " << get_current() << endl;
-
 	// the tracking mask - no tracking outside of this
 	read_volume(m_mask, opts.maskfile.value());
 
@@ -1122,8 +1120,7 @@ int Streamliner::streamline(const float& x_init, const float& y_init,
 				tmp2 = (float) rand() / (float) RAND_MAX;
 			}
 
-
-			/*
+			/* KE
 			 * Add check for first streamline propagation direction
 			 * If this is the first step, then force direction to
 			 * be the provided direction.
@@ -1136,8 +1133,15 @@ int Streamliner::streamline(const float& x_init, const float& y_init,
 				}
 			}
 
+			if (opts.normals.value() != "") {
+				if (it == 1) {
+					th_ph_f  = check_sample_sign(th_ph_f);
+				}
+			}
+			// End KE
 
-			if (th_ph_f(3) > tmp2) { //volume fraction criteriongin
+
+			if (th_ph_f(3) > tmp2) { //volume fraction criterion
 				if (opts.loccurvthresh.value() != "") {
 					cthr = m_loccurvthresh(x_p, y_p, z_p);
 				}
@@ -1154,6 +1158,7 @@ int Streamliner::streamline(const float& x_init, const float& y_init,
 						// no modified euler streaming
 						if (!opts.modeuler.value()) {
 
+							// KE
 							if (it == 1) {
 								if (opts.flipsign.value()) {
 									m_part.jump(th_ph_f(1), th_ph_f(2), forcedir, false);
@@ -1161,6 +1166,7 @@ int Streamliner::streamline(const float& x_init, const float& y_init,
 							} else {
 								m_part.jump(th_ph_f(1), th_ph_f(2), forcedir, true);
 							}
+							// End KE
 
 						// modified euler streaming
 						} else {
